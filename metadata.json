@@ -1,0 +1,8 @@
+{
+  "name": "Israt BD Shop",
+  "description": "Premium Bangladesh online shopping storefront with authentic products, Cash on Delivery, and direct WhatsApp ordering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Storefront products",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 300 },
+        "nameBn": { "type": "string", "maxLength": 300 },
+        "category": { "type": "string", "maxLength": 100 },
+        "categoryBn": { "type": "string", "maxLength": 100 },
+        "originalPrice": { "type": "number" },
+        "offerPrice": { "type": "number" },
+        "discountPercent": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "image": { "type": "string", "maxLength": 2000000 },
+        "additionalImages": { "type": "array" },
+        "inStock": { "type": "boolean" },
+        "stockCount": { "type": "number" },
+        "isFeatured": { "type": "boolean" },
+        "isHotDeal": { "type": "boolean" },
+        "isPopular": { "type": "boolean" },
+        "isHidden": { "type": "boolean" },
+        "shortDesc": { "type": "string", "maxLength": 1000 },
+        "shortDescBn": { "type": "string", "maxLength": 1000 },
+        "fullDescBn": { "type": "string", "maxLength": 10000 },
+        "specifications": { "type": "object" },
+        "availableSizes": { "type": "array" },
+        "availableColors": { "type": "array" },
+        "warrantyDetails": { "type": "string", "maxLength": 500 },
+        "guaranteeDetails": { "type": "string", "maxLength": 500 },
+        "expiryDetails": { "type": "string", "maxLength": 500 },
+        "deliveryInfo": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "nameBn", "category", "offerPrice", "image"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product categories",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "nameBn": { "type": "string", "maxLength": 150 },
+        "icon": { "type": "string", "maxLength": 100 },
+        "image": { "type": "string", "maxLength": 2000000 },
+        "isHidden": { "type": "boolean" },
+        "orderIndex": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "nameBn"]
+    },
+    "Banner": {
+      "title": "Banner",
+      "description": "Homepage banners",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "badge": { "type": "string", "maxLength": 200 },
+        "title": { "type": "string", "maxLength": 300 },
+        "subtitle": { "type": "string", "maxLength": 500 },
+        "ctaText": { "type": "string", "maxLength": 100 },
+        "categoryTarget": { "type": "string", "maxLength": 100 },
+        "bgGradient": { "type": "string", "maxLength": 150 },
+        "image": { "type": "string", "maxLength": 2000000 },
+        "discountBadge": { "type": "string", "maxLength": 100 },
+        "isHidden": { "type": "boolean" },
+        "orderIndex": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "image"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Store configuration",
+      "type": "object",
+      "properties": {
+        "shopName": { "type": "string", "maxLength": 200 },
+        "shopNameBn": { "type": "string", "maxLength": 200 },
+        "logo": { "type": "string", "maxLength": 2000000 },
+        "whatsappNumber": { "type": "string", "maxLength": 50 },
+        "phoneNumber": { "type": "string", "maxLength": 50 },
+        "facebookPage": { "type": "string", "maxLength": 300 },
+        "address": { "type": "string", "maxLength": 500 },
+        "insideDhakaDeliveryCharge": { "type": "number" },
+        "outsideDhakaDeliveryCharge": { "type": "number" },
+        "freeDeliveryMinAmount": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin user permission",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 200 },
+        "role": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Products in the store"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product categories"
+    },
+    "/banners/{bannerId}": {
+      "schema": "Banner",
+      "description": "Promotional homepage banners"
+    },
+    "/settings/{settingId}": {
+      "schema": "Settings",
+      "description": "Global store settings"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Admin credentials and roles"
+    }
+  }
+}
