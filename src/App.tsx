@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Product, Category, Banner, StoreSettings } from './types';
 import {
   subscribeToProducts,
@@ -16,7 +16,7 @@ import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
 import { CategoryFilter } from './components/CategoryFilter';
 import { ProductCard } from './components/ProductCard';
-import { ProductDetailsModal } from './components/ProductDetailsModal';
+import { ProductDetailsPage } from './components/ProductDetailsModal';
 import { Footer } from './components/Footer';
 import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { BloggerExportHelperModal } from './components/BloggerExportHelperModal';
@@ -137,6 +137,84 @@ function StorefrontApp() {
       });
   }, [publicProducts, selectedCategory, searchQuery, sortBy]);
 
+  const savedScrollPositionRef = useRef<number>(0);
+
+  // Open product details as a full-screen mobile/desktop page with browser history
+  const handleOpenProductDetails = (product: Product) => {
+    savedScrollPositionRef.current =
+      window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('product', product.id);
+    window.history.pushState({ type: 'product_details', productId: product.id }, '', url.toString());
+
+    setSelectedProduct(product);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
+
+  // Back navigation from Product Details page
+  const handleBackFromProductDetails = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('product') || window.history.state?.productId) {
+      window.history.back();
+    } else {
+      setSelectedProduct(null);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('product');
+      window.history.replaceState({}, '', url.toString());
+
+      const restorePos = savedScrollPositionRef.current;
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
+        setTimeout(() => {
+          window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
+        }, 50);
+      });
+    }
+  };
+
+  // Handle browser Back / Forward (including Android hardware/gesture back button)
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const prodId = urlParams.get('product') || (event.state?.productId as string | undefined);
+
+      if (prodId) {
+        const found = products.find((p) => p.id === prodId);
+        if (found) {
+          setSelectedProduct(found);
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          return;
+        }
+      }
+
+      // No product in URL -> return to previous shop view and restore previous scroll position
+      setSelectedProduct(null);
+      const restorePos = savedScrollPositionRef.current;
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
+        setTimeout(() => {
+          window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
+        }, 50);
+      });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products]);
+
+  // Initial load check for ?product=<id>
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const prodId = urlParams.get('product');
+    if (prodId && products.length > 0 && !selectedProduct) {
+      const found = products.find((p) => p.id === prodId);
+      if (found) {
+        setSelectedProduct(found);
+      }
+    }
+  }, [products, selectedProduct]);
+
   // Admin access handler
   const handleOpenAdmin = () => {
     if (isAdmin) {
@@ -175,7 +253,22 @@ function StorefrontApp() {
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col bg-slate-50 text-slate-800 relative">
+    <>
+      {/* Full-Screen Product Details Page */}
+      {selectedProduct && (
+        <ProductDetailsPage
+          product={selectedProduct}
+          settings={settings}
+          onBack={handleBackFromProductDetails}
+        />
+      )}
+
+      {/* Main Storefront Container (Hidden when Product Details is open to preserve state & exact scroll position) */}
+      <div
+        className={`min-h-screen w-full max-w-full overflow-x-hidden flex flex-col bg-slate-50 text-slate-800 relative ${
+          selectedProduct ? 'hidden' : ''
+        }`}
+      >
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-16 sm:top-20 right-3 sm:right-4 z-50 max-w-[calc(100vw-1.5rem)] bg-emerald-800 text-white text-xs sm:text-sm font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xl border border-emerald-600 flex items-center space-x-2 animate-in fade-in slide-in-from-top-2">
@@ -266,7 +359,7 @@ function StorefrontApp() {
                 key={product.id}
                 product={product}
                 settings={settings}
-                onViewDetails={(p) => setSelectedProduct(p)}
+                onViewDetails={handleOpenProductDetails}
               />
             ))}
           </div>
@@ -295,13 +388,6 @@ function StorefrontApp() {
         )}
       </main>
 
-      {/* Product Details Modal */}
-      <ProductDetailsModal
-        product={selectedProduct}
-        settings={settings}
-        onClose={() => setSelectedProduct(null)}
-      />
-
       {/* Admin Login Modal */}
       <AdminLoginModal
         isOpen={isAdminLoginOpen}
@@ -329,6 +415,7 @@ function StorefrontApp() {
         isAdmin={isAdmin}
       />
     </div>
+    </>
   );
 }
 
