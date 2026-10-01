@@ -34,10 +34,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={() => onViewDetails(product)}
-      className="group bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-300 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden relative cursor-pointer"
+      className="group bg-white rounded-2xl border border-slate-200/90 hover:border-emerald-300 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden relative cursor-pointer w-full max-w-full min-w-0"
     >
       {/* Top badges */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between pointer-events-none">
+      <div className="absolute top-2 left-2 right-2 z-10 flex items-center justify-between pointer-events-none">
         <div className="flex flex-col gap-1">
           {product.discountPercent > 0 && (
             <span className="bg-rose-600 text-white font-black text-[11px] px-2 py-0.5 rounded-md shadow-xs tracking-wider">
@@ -59,8 +59,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Facebook Share Button */}
         <button
+          type="button"
           onClick={handleFacebookShare}
-          className="pointer-events-auto w-8 h-8 rounded-full bg-white/90 hover:bg-blue-600 hover:text-white text-slate-600 backdrop-blur-md flex items-center justify-center shadow-md transition-all active:scale-90"
+          className="pointer-events-auto w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 hover:bg-blue-600 hover:text-white text-slate-600 backdrop-blur-md flex items-center justify-center shadow-md transition-all active:scale-90"
           title="ফেসবুকে শেয়ার করুন"
           aria-label="Share on Facebook"
         >
@@ -80,6 +81,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Quick View Overlay on Hover */}
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onViewDetails(product);
@@ -107,14 +109,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Product Details Section */}
-      <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
-        <div>
+      <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between min-w-0">
+        <div className="min-w-0">
           {/* Rating & Review */}
           <div className="flex items-center justify-between text-xs mb-1.5">
-            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded truncate max-w-[60%]">
               {product.categoryBn}
             </span>
-            <div className="flex items-center space-x-1 text-amber-500">
+            <div className="flex items-center space-x-1 text-amber-500 shrink-0">
               <Star className="w-3.5 h-3.5 fill-current" />
               <span className="font-bold text-slate-800 text-xs">{product.rating}</span>
               <span className="text-[11px] text-slate-400">({product.reviewCount})</span>
@@ -130,8 +132,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </p>
 
           {/* Price Section */}
-          <div className="mt-2.5 flex items-baseline gap-2">
-            <span className="text-lg sm:text-xl font-black text-emerald-700 tracking-tight">
+          <div className="mt-2.5 flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+            <span className="text-base sm:text-xl font-black text-emerald-700 tracking-tight">
               {formatBDT(product.offerPrice)}
             </span>
             {product.originalPrice > product.offerPrice && (
@@ -148,27 +150,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Action Buttons: ONLY 1. বিস্তারিত দেখুন, 2. WhatsApp-এ অর্ডার করুন */}
-        <div className="mt-3.5 grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+        <div className="mt-3.5 grid grid-cols-2 gap-1.5 sm:gap-2 pt-2 border-t border-slate-100 w-full min-w-0">
           {/* 1. বিস্তারিত দেখুন */}
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onViewDetails(product);
             }}
-            className="w-full py-2.5 px-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+            className="w-full py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center space-x-1 sm:space-x-1.5 transition-colors cursor-pointer min-w-0 touch-manipulation"
           >
             <Eye className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span className="bengali-font">বিস্তারিত দেখুন</span>
+            <span className="bengali-font truncate">বিস্তারিত দেখুন</span>
           </button>
 
           {/* 2. WhatsApp-এ অর্ডার করুন */}
           <button
+            type="button"
             onClick={handleWhatsAppOrder}
-            className="w-full py-2.5 px-2 rounded-xl text-xs font-bold bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1caa51] text-white flex items-center justify-center space-x-1.5 transition-all shadow-sm shadow-[#25D366]/25 cursor-pointer active:scale-95"
+            className="w-full py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1caa51] text-white flex items-center justify-center space-x-1 sm:space-x-1.5 transition-all shadow-sm shadow-[#25D366]/25 cursor-pointer active:scale-95 min-w-0 touch-manipulation"
             title="WhatsApp-এ অর্ডার করুন"
           >
             <MessageCircle className="w-3.5 h-3.5 fill-current text-white shrink-0" />
-            <span className="bengali-font whitespace-nowrap">WhatsApp-এ অর্ডার করুন</span>
+            <span className="bengali-font truncate sm:whitespace-normal">WhatsApp অর্ডার</span>
           </button>
         </div>
       </div>

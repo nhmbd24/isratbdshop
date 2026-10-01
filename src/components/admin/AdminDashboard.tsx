@@ -34,41 +34,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const { currentUser, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-100 flex flex-col w-full max-w-full overflow-x-hidden">
       {/* Admin Top Navbar */}
-      <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800">
+      <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800 w-full max-w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-16 min-w-0">
             {/* Left Brand */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md">
-                <ShoppingBag className="w-5 h-5" />
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shrink-0">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-extrabold text-base sm:text-lg tracking-tight">
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5 sm:space-x-2">
+                  <span className="font-extrabold text-sm sm:text-lg tracking-tight truncate">
                     {settings.shopName || 'Israt BD Shop'}
                   </span>
-                  <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-400/30">
-                    Admin Console
+                  <span className="bg-emerald-500/20 text-emerald-300 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-400/30 shrink-0">
+                    Admin
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 bengali-font -mt-0.5">
+                <p className="text-[10px] sm:text-[11px] text-slate-400 bengali-font -mt-0.5 truncate">
                   সুপার এডমিন কন্ট্রোল প্যানেল
                 </p>
               </div>
             </div>
 
             {/* Right Admin Profile & Actions */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
               <button
                 onClick={onExitAdmin}
-                className="px-3 sm:px-4 py-2 bg-emerald-700/80 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors cursor-pointer"
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-emerald-700/80 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1 sm:space-x-1.5 transition-colors cursor-pointer"
                 title="গ্রাহক স্টোরফ্রন্টে ফিরে যান"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span className="bengali-font hidden sm:inline">স্টোরফ্রন্ট দেখুন</span>
-                <span className="bengali-font sm:hidden">শপ দেখুন</span>
+                <span className="bengali-font sm:hidden">শপ</span>
               </button>
 
               <div className="hidden md:flex items-center space-x-2 text-xs text-slate-300 pl-2 border-l border-slate-800">
@@ -81,7 +81,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   await logout();
                   onExitAdmin();
                 }}
-                className="p-2 sm:px-3 sm:py-2 bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                className="p-1.5 sm:px-3 sm:py-2 bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
                 title="লগআউট"
               >
                 <LogOut className="w-3.5 h-3.5 text-rose-400" />
@@ -91,7 +91,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           {/* Sub Navigation Tabs */}
-          <div className="flex items-center space-x-2 overflow-x-auto py-2.5 border-t border-slate-800 scrollbar-none">
+          <div className="flex items-center space-x-2 overflow-x-auto py-2.5 border-t border-slate-800 no-scrollbar touch-pan-x w-full min-w-0">
             <button
               onClick={() => setActiveTab('products')}
               className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${

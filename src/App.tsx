@@ -175,12 +175,12 @@ function StorefrontApp() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col bg-slate-50 text-slate-800 relative">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-4 z-50 bg-emerald-800 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-2xl shadow-xl border border-emerald-600 flex items-center space-x-2 animate-in fade-in slide-in-from-top-2">
-          <Check className="w-4 h-4 text-emerald-300" />
-          <span className="bengali-font">{toastMessage}</span>
+        <div className="fixed top-16 sm:top-20 right-3 sm:right-4 z-50 max-w-[calc(100vw-1.5rem)] bg-emerald-800 text-white text-xs sm:text-sm font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xl border border-emerald-600 flex items-center space-x-2 animate-in fade-in slide-in-from-top-2">
+          <Check className="w-4 h-4 text-emerald-300 shrink-0" />
+          <span className="bengali-font truncate">{toastMessage}</span>
         </div>
       )}
 
@@ -221,15 +221,15 @@ function StorefrontApp() {
       />
 
       {/* Main Product Showcase Section */}
-      <main id="products-grid" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <main id="products-grid" className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 w-full min-w-0">
         {/* Section Header with title and sorting */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 mb-4 border-b border-slate-200/80 gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 sm:pb-4 mb-4 border-b border-slate-200/80 gap-3 w-full min-w-0">
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight bengali-font">
+              <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight bengali-font">
                 {searchQuery ? `"${searchQuery}" এর সার্চ ফলাফল` : 'আমাদের জনপ্রিয় পণ্যসমূহ'}
               </h2>
-              <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-emerald-100 text-emerald-800 text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
                 {filteredProducts.length} টি পণ্য
               </span>
             </div>
@@ -239,7 +239,7 @@ function StorefrontApp() {
           </div>
 
           {/* Sort Selector */}
-          <div className="flex items-center space-x-2 self-end sm:self-auto">
+          <div className="flex items-center space-x-2 self-start sm:self-auto">
             <span className="text-xs text-slate-500 font-medium bengali-font hidden sm:inline">
               সাজান:
             </span>
@@ -260,7 +260,7 @@ function StorefrontApp() {
 
         {/* Product Grid */}
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 w-full min-w-0">
             {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}

@@ -23,8 +23,8 @@ export const Footer: React.FC<FooterProps> = ({
   const facebookUrl = settings?.facebookPage || 'https://facebook.com/isratbdshop';
 
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-12 pb-8 border-t border-slate-800 mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-slate-900 text-slate-300 pt-10 sm:pt-12 pb-8 border-t border-slate-800 mt-12 sm:mt-16 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-full min-w-0">
         {/* Top Feature Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-10 border-b border-slate-800 text-center sm:text-left">
           <div className="flex items-center space-x-3 justify-center sm:justify-start">
