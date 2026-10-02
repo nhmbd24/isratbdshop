@@ -6,6 +6,8 @@ export const DEFAULT_SHOP_NAME = 'Israt BD Shop | ইসরাত বিডি �
 export const PUBLIC_BLOGGER_URL = 'https://isratbdshop.blogspot.com/';
 
 export function getPublicProductUrl(productId: string): string {
+  // Blogger does not support custom paths like /product/ID (returns 404).
+  // Use Blogger-compatible query parameter: https://isratbdshop.blogspot.com/?product=ID
   return `https://isratbdshop.blogspot.com/?product=${encodeURIComponent(productId)}`;
 }
 

@@ -18,8 +18,8 @@ import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { BloggerExportHelperModal } from './components/BloggerExportHelperModal';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { SearchX, Check, Loader2, Sparkles } from 'lucide-react';
-import { formatBDT } from './utils/helpers';
+import { SearchX, Check, ArrowLeft } from 'lucide-react';
+import { formatBDT, getPublicProductUrl } from './utils/helpers';
 
 function StorefrontApp() {
   const { currentUser, isAdmin, loading: authLoading } = useAuth();
@@ -31,12 +31,10 @@ function StorefrontApp() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
 
-  // Firestore Loading States: Ensure clean loading until real Firestore data is ready
+  // Firestore background synchronization states - loads silently in background
   const [isProductsLoaded, setIsProductsLoaded] = useState(false);
   const [isCategoriesLoaded, setIsCategoriesLoaded] = useState(false);
   const [isBannersLoaded, setIsBannersLoaded] = useState(false);
-
-  const isInitialLoading = !isProductsLoaded || !isCategoriesLoaded || !isBannersLoaded;
 
   // View mode
   const [viewMode, setViewMode] = useState<'storefront' | 'admin'>('storefront');
@@ -132,14 +130,34 @@ function StorefrontApp() {
 
   const savedScrollPositionRef = useRef<number>(0);
 
-  // Open product details as a full-screen mobile/desktop page with browser history
+  // Helper to extract productId from either ?product=:id query (Blogger standard) or fallback pathname
+  const getProductIdFromLocation = (): string | null => {
+    // 1. Primary Blogger-compatible format: ?product=PRODUCT_ID or ?p=PRODUCT_ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramId = urlParams.get('product') || urlParams.get('p');
+    if (paramId) {
+      return decodeURIComponent(paramId);
+    }
+    // 2. Legacy / fallback pathname: /product/PRODUCT_ID
+    const pathMatch = window.location.pathname.match(/(?:^|\/)(?:product|p)\/([^/?#]+)/i);
+    if (pathMatch) {
+      return decodeURIComponent(pathMatch[1]);
+    }
+    return null;
+  };
+
+  // Open product details as a full-screen mobile/desktop page with Blogger-compatible ?product=ID URL
   const handleOpenProductDetails = (product: Product) => {
     savedScrollPositionRef.current =
       window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
 
-    const url = new URL(window.location.href);
-    url.searchParams.set('product', product.id);
-    window.history.pushState({ type: 'product_details', productId: product.id }, '', url.toString());
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('product', product.id);
+    // Remove any legacy /product/ pathname to keep clean Blogger URL
+    if (currentUrl.pathname.includes('/product/')) {
+      currentUrl.pathname = currentUrl.pathname.replace(/\/product\/[^/?#]+/i, '') || '/';
+    }
+    window.history.pushState({ type: 'product_details', productId: product.id }, '', currentUrl.toString());
 
     setSelectedProduct(product);
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -147,30 +165,61 @@ function StorefrontApp() {
 
   // Back navigation from Product Details page
   const handleBackFromProductDetails = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('product') || window.history.state?.productId) {
-      window.history.back();
+    const targetId = getProductIdFromLocation() || window.history.state?.productId;
+    if (targetId) {
+      if (window.history.length > 1 && window.history.state?.type === 'product_details') {
+        window.history.back();
+      } else {
+        // Direct land fallback: remove ?product= from URL and stay on homepage
+        setSelectedProduct(null);
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('product');
+        currentUrl.searchParams.delete('p');
+        if (currentUrl.pathname.includes('/product/')) {
+          currentUrl.pathname = currentUrl.pathname.replace(/\/product\/[^/?#]+/i, '') || '/';
+        }
+        window.history.replaceState({ type: 'shop_home' }, '', currentUrl.toString());
+
+        const restorePos = savedScrollPositionRef.current;
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
+          setTimeout(() => {
+            window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
+          }, 50);
+        });
+      }
     } else {
       setSelectedProduct(null);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('product');
-      window.history.replaceState({}, '', url.toString());
-
-      const restorePos = savedScrollPositionRef.current;
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
-        setTimeout(() => {
-          window.scrollTo({ top: restorePos, left: 0, behavior: 'instant' });
-        }, 50);
-      });
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete('product');
+      currentUrl.searchParams.delete('p');
+      window.history.replaceState({ type: 'shop_home' }, '', currentUrl.toString());
     }
   };
+
+  // If directly opened with ?product=ID from social share or external link:
+  // Create a shop_home history state first so Android/browser Back returns to homepage instead of exiting website
+  useEffect(() => {
+    const directProductId = getProductIdFromLocation();
+    if (directProductId && (!window.history.state || window.history.state.type !== 'product_details')) {
+      const homeUrl = new URL(window.location.href);
+      homeUrl.searchParams.delete('product');
+      homeUrl.searchParams.delete('p');
+      if (homeUrl.pathname.includes('/product/')) {
+        homeUrl.pathname = homeUrl.pathname.replace(/\/product\/[^/?#]+/i, '') || '/';
+      }
+      window.history.replaceState({ type: 'shop_home' }, '', homeUrl.toString());
+
+      const productUrl = new URL(window.location.href);
+      productUrl.searchParams.set('product', directProductId);
+      window.history.pushState({ type: 'product_details', productId: directProductId }, '', productUrl.toString());
+    }
+  }, []);
 
   // Handle browser Back / Forward (including Android hardware/gesture back button)
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const prodId = urlParams.get('product') || (event.state?.productId as string | undefined);
+      const prodId = getProductIdFromLocation() || (event.state?.productId as string | undefined);
 
       if (prodId) {
         const found = products.find((p) => p.id === prodId);
@@ -181,7 +230,7 @@ function StorefrontApp() {
         }
       }
 
-      // No product in URL -> return to previous shop view and restore previous scroll position
+      // No product in URL -> return to shop homepage and restore previous scroll position
       setSelectedProduct(null);
       const restorePos = savedScrollPositionRef.current;
       requestAnimationFrame(() => {
@@ -196,17 +245,57 @@ function StorefrontApp() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [products]);
 
-  // Initial load check for ?product=<id>
+  // Synchronize product selection when products are loaded from Firestore
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const prodId = urlParams.get('product');
-    if (prodId && products.length > 0 && !selectedProduct) {
-      const found = products.find((p) => p.id === prodId);
-      if (found) {
+    const targetId = getProductIdFromLocation();
+    if (targetId && products.length > 0) {
+      const found = products.find((p) => p.id === targetId);
+      if (found && (!selectedProduct || selectedProduct.id !== found.id)) {
         setSelectedProduct(found);
       }
     }
   }, [products, selectedProduct]);
+
+  // Dynamic Open Graph & document title synchronization for webviews / in-app previewers
+  useEffect(() => {
+    if (selectedProduct) {
+      document.title = `${selectedProduct.nameBn} - ${formatBDT(selectedProduct.offerPrice)} | ${settings?.shopNameBn || 'ইসরাত বিডি শপ'}`;
+
+      const updateMeta = (nameOrProp: string, content: string) => {
+        let el =
+          document.querySelector(`meta[property="${nameOrProp}"]`) ||
+          document.querySelector(`meta[name="${nameOrProp}"]`);
+        if (!el) {
+          el = document.createElement('meta');
+          if (nameOrProp.startsWith('og:')) {
+            el.setAttribute('property', nameOrProp);
+          } else {
+            el.setAttribute('name', nameOrProp);
+          }
+          document.head.appendChild(el);
+        }
+        el.setAttribute('content', content);
+      };
+
+      const shareUrl = getPublicProductUrl(selectedProduct.id);
+      updateMeta('og:title', `${selectedProduct.nameBn} - ${formatBDT(selectedProduct.offerPrice)} | ${settings?.shopNameBn || 'ইসরাত বিডি শপ'}`);
+      updateMeta(
+        'og:description',
+        selectedProduct.shortDescBn ||
+          selectedProduct.shortDesc ||
+          `সাশ্রয়ী মূল্যে সেরা পণ্য ${selectedProduct.nameBn}, ক্যাশ অন ডেলিভারি ও দ্রুত ডেলিভারি সুবিধা।`
+      );
+      updateMeta('og:image', selectedProduct.image);
+      updateMeta('og:image:secure_url', selectedProduct.image);
+      updateMeta('og:url', shareUrl);
+      updateMeta('twitter:title', `${selectedProduct.nameBn} - ${formatBDT(selectedProduct.offerPrice)}`);
+      updateMeta('twitter:image', selectedProduct.image);
+    } else {
+      document.title = settings?.shopNameBn
+        ? `${settings.shopNameBn} | অনলাইন শপ`
+        : 'Israt BD Shop | ইসরাত বিডি শপ';
+    }
+  }, [selectedProduct, settings]);
 
   // Admin access handler
   const handleOpenAdmin = () => {
@@ -228,33 +317,6 @@ function StorefrontApp() {
   const handleBannerDeleted = (deletedId: string) => {
     setBanners((prev) => prev.filter((b) => b.id !== deletedId));
   };
-
-  // While Firestore data is loading, show loading state and NEVER show old/default products
-  if (isInitialLoading) {
-    return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-sm w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl flex flex-col items-center text-center space-y-4 animate-in fade-in duration-300">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-inner relative">
-            <Sparkles className="w-8 h-8 text-emerald-600 animate-pulse" />
-          </div>
-
-          <div className="space-y-1">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 bengali-font">
-              {settings?.shopNameBn || 'ইসরাত বিডি শপ'}
-            </h2>
-            <p className="text-xs text-slate-500 font-medium bengali-font">
-              দোকানের তথ্য ও পণ্য লোড হচ্ছে...
-            </p>
-          </div>
-
-          <div className="flex items-center space-x-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200/60">
-            <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-            <span className="bengali-font">অনুগ্রহ করে একটু অপেক্ষা করুন</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // If Admin View is active and user is admin
   if (viewMode === 'admin' && isAdmin) {
@@ -283,10 +345,38 @@ function StorefrontApp() {
         />
       )}
 
+      {/* Direct Product Link Loading Placeholder: shown only when opened directly via ?product=ID while loading */}
+      {!selectedProduct && getProductIdFromLocation() && !isProductsLoaded && (
+        <div className="min-h-screen w-full bg-slate-50 flex flex-col">
+          <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
+            <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handleBackFromProductDetails}
+                className="flex items-center space-x-1.5 text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="bengali-font">ফিরে যান</span>
+              </button>
+              <span className="font-extrabold text-sm sm:text-base text-emerald-800 bengali-font truncate">
+                {settings?.shopNameBn || 'ইসরাত বিডি শপ'}
+              </span>
+              <div className="w-9" />
+            </div>
+          </header>
+          <div className="max-w-4xl mx-auto p-4 sm:p-8 w-full flex-1 animate-pulse space-y-4">
+            <div className="aspect-square max-w-sm mx-auto bg-slate-200/80 rounded-3xl" />
+            <div className="h-6 bg-slate-200/80 rounded-xl w-2/3 mx-auto" />
+            <div className="h-4 bg-slate-200/80 rounded-xl w-1/3 mx-auto" />
+            <div className="h-12 bg-slate-200/80 rounded-2xl w-full max-w-sm mx-auto" />
+          </div>
+        </div>
+      )}
+
       {/* Main Storefront Container (Hidden when Product Details is open to preserve state & exact scroll position) */}
       <div
         className={`min-h-screen w-full max-w-full overflow-x-hidden flex flex-col bg-slate-50 text-slate-800 relative ${
-          selectedProduct ? 'hidden' : ''
+          selectedProduct || (!selectedProduct && getProductIdFromLocation() && !isProductsLoaded) ? 'hidden' : ''
         }`}
       >
       {/* Toast Notification */}
@@ -383,8 +473,23 @@ function StorefrontApp() {
               />
             ))}
           </div>
+        ) : !isProductsLoaded ? (
+          /* Silent background load: light placeholder skeleton */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 w-full min-w-0">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 space-y-3 animate-pulse"
+              >
+                <div className="aspect-square w-full bg-slate-100 rounded-xl" />
+                <div className="h-4 bg-slate-100 rounded w-3/4" />
+                <div className="h-4 bg-slate-100 rounded w-1/2" />
+                <div className="h-9 bg-slate-100 rounded-xl w-full" />
+              </div>
+            ))}
+          </div>
         ) : (
-          /* Empty Search / Filter State */
+          /* Empty Search / Filter State (only when loaded and truly empty) */
           <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-md mx-auto my-8 space-y-4">
             <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
               <SearchX className="w-8 h-8" />

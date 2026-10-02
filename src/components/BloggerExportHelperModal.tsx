@@ -91,6 +91,18 @@ export const BloggerExportHelperModal: React.FC<BloggerExportHelperModalProps> =
               </div>
             </div>
 
+            <div className="flex items-start space-x-3 p-3 bg-emerald-50/60 rounded-xl border border-emerald-100">
+              <span className="w-6 h-6 rounded-full bg-emerald-700 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                ৪
+              </span>
+              <div>
+                <strong className="text-slate-900">ব্লগার-বান্ধব পণ্যের লিংক (কোনো 404 পেজ নেই)</strong>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  ব্লগারে সরাসরি যেকোনো পণ্যের লিংক যেমন <code>https://isratbdshop.blogspot.com/?product=ID</code> শেয়ার করা যায়। এটি ওপেন করলে গ্রাহক সরাসরি সম্পূর্ণ প্রোডাক্ট ভিউতে চলে যান এবং ব্যাক বাটনে চাপলে হোমপেজে ফিরে আসেন।
+                </p>
+              </div>
+            </div>
+
             {/* Facebook / Messenger Social Share Open Graph Tags for Blogger */}
             <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
