@@ -1,6 +1,6 @@
 import React from 'react';
 import { Product, StoreSettings } from '../types';
-import { formatBDT, generateDirectWhatsAppUrl, openFacebookShare } from '../utils/helpers';
+import { formatBDT, generateDirectWhatsAppUrl, openFacebookShare, handleProductShare } from '../utils/helpers';
 import { Eye, MessageCircle, Share2, Star, Sparkles } from 'lucide-react';
 
 interface ProductCardProps {
@@ -26,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleFacebookShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    openFacebookShare(product, undefined, settings?.shopName);
+    handleProductShare(product, settings?.shopName);
   };
 
   const savings = product.originalPrice - product.offerPrice;

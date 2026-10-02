@@ -70,17 +70,68 @@ export function generateProductWhatsAppUrl(
   );
 }
 
+/**
+ * Open Facebook Share Dialog.
+ * The encoded 'u' parameter is guaranteed to be:
+ * https://nhmbd24.github.io/isratbdshop/share/PRODUCT_ID.html
+ */
 export function openFacebookShare(product?: Product, customUrl?: string, shopName = DEFAULT_SHOP_NAME): void {
-  let urlToShare = customUrl;
-  if (!urlToShare) {
-    urlToShare = product?.id ? getProductShareUrl(product.id) : PUBLIC_BLOGGER_URL;
-  }
+  const urlToShare = customUrl || (product?.id ? getProductShareUrl(product.id) : PUBLIC_BLOGGER_URL);
 
   const quote = product
     ? `${product.nameBn || product.name} - ${formatBDT(product.offerPrice)} | ${shopName}`
     : `${shopName} - বাংলাদেশের বিশ্বস্ত অনলাইন শপ। সাশ্রয়ী মূল্যে সেরা পণ্য ও ক্যাশ অন ডেলিভারি!`;
 
   const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}&quote=${encodeURIComponent(quote)}`;
-  window.open(shareUrl, '_blank', 'width=600,height=500');
+  if (typeof window !== 'undefined') {
+    window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
+  }
+}
+
+/**
+ * Native Navigator Share helper (Mobile & Supported Browsers).
+ * Shares the exact same GitHub Pages product share URL:
+ * https://nhmbd24.github.io/isratbdshop/share/PRODUCT_ID.html
+ */
+export async function shareProductWithNavigator(
+  product: Product,
+  shopName = DEFAULT_SHOP_NAME
+): Promise<boolean> {
+  const shareUrl = getProductShareUrl(product.id);
+  const title = `${product.nameBn || product.name} - ${formatBDT(product.offerPrice)} | ${shopName}`;
+  const text = `${product.nameBn || product.name} - অফার মূল্য: ${formatBDT(product.offerPrice)} | ইসরাত বিডি শপ`;
+
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    try {
+      await navigator.share({
+        title,
+        text,
+        url: shareUrl,
+      });
+      return true;
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        // User cancelled native share sheet, do not open fallback popup
+        return true;
+      }
+      console.warn('navigator.share rejected, using fallback:', err);
+    }
+  }
+  return false;
+}
+
+/**
+ * Universal product share handler used by all product Share buttons:
+ * - Uses navigator.share() with GitHub Pages URL when available on mobile/supported devices.
+ * - Otherwise opens Facebook sharer with u=https://nhmbd24.github.io/isratbdshop/share/PRODUCT_ID.html
+ */
+export async function handleProductShare(
+  product: Product,
+  shopName?: string
+): Promise<void> {
+  const handled = await shareProductWithNavigator(product, shopName);
+  if (!handled) {
+    openFacebookShare(product, undefined, shopName);
+  }
 }
 

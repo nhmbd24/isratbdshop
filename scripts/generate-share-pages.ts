@@ -24,14 +24,22 @@ function buildProductHtml(product: any): string {
   const shopName = 'Israt BD Shop | ইসরাত বিডি শপ';
   const publicShopUrl = `https://isratbdshop.blogspot.com/#product-${encodeURIComponent(product.id)}`;
   const canonicalUrl = `https://nhmbd24.github.io/isratbdshop/share/${encodeURIComponent(product.id)}.html`;
+  
   const name = product.nameBn || product.name || 'পণ্য';
-  const priceFormatted = `৳${(product.offerPrice || 0).toLocaleString('en-IN')}`;
+  const offerPrice = product.offerPrice || 0;
+  const priceFormatted = `৳${offerPrice.toLocaleString('en-IN')}`;
   const title = `${name} - ${priceFormatted} | ${shopName}`;
+  
   const rawDesc = product.shortDescBn || product.shortDesc || product.fullDescBn || '';
   const cleanDesc = rawDesc.replace(/\s+/g, ' ').trim().slice(0, 180);
-  const originalPriceStr = product.originalPrice > product.offerPrice ? ` (পূর্বমূল্য ৳${product.originalPrice.toLocaleString('en-IN')})` : '';
-  const description = `অফার মূল্য: ${priceFormatted}${originalPriceStr}। ${cleanDesc ? cleanDesc + '। ' : ''}সারা দেশে ক্যাশ অন ডেলিভারি ও দ্রুত হোম ডেলিভারি সুবিধা।`;
-  const imageUrl = product.image || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&h=630&q=85';
+  const description = `${cleanDesc ? cleanDesc + ' - ' : ''}অফার মূল্য: ${priceFormatted}। সারা দেশে ক্যাশ অন ডেলিভারি | Israt BD Shop`;
+  
+  let imageUrl = product.image || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&h=630&q=85';
+  if (imageUrl.startsWith('//')) {
+    imageUrl = 'https:' + imageUrl;
+  } else if (imageUrl.startsWith('/')) {
+    imageUrl = `https://nhmbd24.github.io${imageUrl}`;
+  }
 
   return `<!DOCTYPE html>
 <html lang="bn">
@@ -54,7 +62,7 @@ function buildProductHtml(product: any): string {
   <meta property="og:image:alt" content="${escapeHtml(name)}">
 
   <!-- Product Metadata -->
-  <meta property="product:price:amount" content="${product.offerPrice || 0}">
+  <meta property="product:price:amount" content="${offerPrice}">
   <meta property="product:price:currency" content="BDT">
 
   <!-- Twitter Card -->
@@ -203,6 +211,9 @@ async function generate() {
   // Fallback index.html inside /share/
   const fallbackHtml = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=https://isratbdshop.blogspot.com/"><script>window.location.replace("https://isratbdshop.blogspot.com/");</script></head><body>Redirecting to Israt BD Shop...</body></html>`;
   fs.writeFileSync(path.resolve(shareDir, 'index.html'), fallbackHtml, 'utf-8');
+
+  // Prevent GitHub Pages from ignoring files or folders with underscores
+  fs.writeFileSync(path.resolve(distDir, '.nojekyll'), '', 'utf-8');
 
   console.log(`Generated ${count} product share pages in dist/share/`);
 }

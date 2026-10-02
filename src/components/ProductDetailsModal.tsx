@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Product, StoreSettings } from '../types';
-import { formatBDT, generateDirectWhatsAppUrl, openFacebookShare } from '../utils/helpers';
+import { formatBDT, generateDirectWhatsAppUrl, openFacebookShare, handleProductShare } from '../utils/helpers';
 import {
   ArrowLeft,
   MessageCircle,
@@ -63,7 +63,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsModalProps> = ({
   };
 
   const handleFacebookShare = () => {
-    openFacebookShare(product, undefined, settings?.shopName);
+    handleProductShare(product, settings?.shopName);
   };
 
   const savings = Math.max(0, product.originalPrice - product.offerPrice);

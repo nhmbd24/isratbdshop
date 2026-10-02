@@ -135,22 +135,45 @@ function StorefrontApp() {
     selectedProductRef.current = selectedProduct;
   }, [selectedProduct]);
 
-  // Open direct product if shared link hash is present (#product-PRODUCT_ID)
+  // Open direct product if shared link hash is present (#product-PRODUCT_ID or ?product=PRODUCT_ID)
   useEffect(() => {
     if (!products || products.length === 0) return;
-    try {
-      const hash = window.location.hash;
-      if (hash) {
-        const match = hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-        if (match) {
-          const targetId = decodeURIComponent(match[1]);
+    const checkTargetProduct = () => {
+      try {
+        let targetId: string | null = null;
+        // 1. Check window.location.hash
+        const hash = window.location.hash;
+        if (hash) {
+          const match = hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
+          if (match) targetId = decodeURIComponent(match[1]);
+        }
+        // 2. Check query param (?product=ID)
+        if (!targetId && window.location.search) {
+          const params = new URLSearchParams(window.location.search);
+          const p = params.get('product') || params.get('p') || params.get('id');
+          if (p) targetId = p;
+        }
+        // 3. Check parent frame hash if accessible (same origin or cross-origin safe check)
+        if (!targetId) {
+          try {
+            if (window.parent && window.parent !== window && window.parent.location.hash) {
+              const pMatch = window.parent.location.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
+              if (pMatch) targetId = decodeURIComponent(pMatch[1]);
+            }
+          } catch {}
+        }
+        if (targetId) {
           const found = products.find((p) => p.id === targetId);
           if (found && (!selectedProductRef.current || selectedProductRef.current.id !== found.id)) {
             setSelectedProduct(found);
           }
         }
-      }
-    } catch {}
+      } catch {}
+    };
+
+    checkTargetProduct();
+    window.addEventListener('hashchange', checkTargetProduct);
+    return () => window.removeEventListener('hashchange', checkTargetProduct);
   }, [products]);
 
   // Open product details as a full-screen view inside the React app (never alters Blogger parent URL)

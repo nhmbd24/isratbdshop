@@ -1,6 +1,5 @@
 import React from 'react';
 import { ShoppingBag, Phone, Mail, MapPin, MessageCircle, ShieldCheck, Truck, RefreshCw, Facebook, Lock } from 'lucide-react';
-import { openFacebookShare } from '../utils/helpers';
 import { StoreSettings } from '../types';
 
 interface FooterProps {
