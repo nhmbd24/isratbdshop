@@ -135,58 +135,22 @@ function StorefrontApp() {
     selectedProductRef.current = selectedProduct;
   }, [selectedProduct]);
 
-  // Helper to extract productId from hash (#product-ID) or query param (?product=ID)
-  // Using hash is safe on Blogger because hash fragments are never sent to the Blogger server
-  const getInitialProductId = (): string | null => {
+  // Open direct product if shared link hash is present (#product-PRODUCT_ID)
+  useEffect(() => {
+    if (!products || products.length === 0) return;
     try {
-      // 1. Hash-based check (#product-PRODUCT_ID or #p-PRODUCT_ID)
       const hash = window.location.hash;
       if (hash) {
-        const hashMatch = hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-        if (hashMatch) {
-          return decodeURIComponent(hashMatch[1]);
-        }
-      }
-
-      // 2. Query param fallback (?product=PRODUCT_ID or ?p=PRODUCT_ID)
-      if (window.location.search) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const queryId = urlParams.get('product') || urlParams.get('p');
-        if (queryId) {
-          return decodeURIComponent(queryId);
+        const match = hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
+        if (match) {
+          const targetId = decodeURIComponent(match[1]);
+          const found = products.find((p) => p.id === targetId);
+          if (found && (!selectedProductRef.current || selectedProductRef.current.id !== found.id)) {
+            setSelectedProduct(found);
+          }
         }
       }
     } catch {}
-    return null;
-  };
-
-  const cleanHashIfPresent = () => {
-    try {
-      if (window.location.hash) {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      }
-    } catch {}
-  };
-
-  // If directly opened with a product reference, prepare history state so Back button returns to shop
-  useEffect(() => {
-    const directId = getInitialProductId();
-    if (directId) {
-      try {
-        window.history.pushState({ isProductView: true }, '');
-      } catch {}
-    }
-  }, []);
-
-  // When products arrive from Firestore, open direct product if specified
-  useEffect(() => {
-    const targetId = getInitialProductId();
-    if (targetId && products.length > 0) {
-      const found = products.find((p) => p.id === targetId);
-      if (found && (!selectedProduct || selectedProduct.id !== found.id)) {
-        setSelectedProduct(found);
-      }
-    }
   }, [products]);
 
   // Open product details as a full-screen view inside the React app (never alters Blogger parent URL)
@@ -207,7 +171,6 @@ function StorefrontApp() {
 
   // Back navigation from Product Details page
   const handleBackFromProductDetails = () => {
-    cleanHashIfPresent();
     if (window.history.state?.isProductView) {
       window.history.back();
     } else {
@@ -223,7 +186,6 @@ function StorefrontApp() {
   useEffect(() => {
     const handlePopState = () => {
       if (selectedProductRef.current) {
-        cleanHashIfPresent();
         setSelectedProduct(null);
         const restorePos = savedScrollPositionRef.current;
         requestAnimationFrame(() => {

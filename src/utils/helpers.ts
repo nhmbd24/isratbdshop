@@ -11,9 +11,6 @@ export function formatBDT(amount: number): string {
 }
 
 export function getProductShareUrl(productId: string): string {
-  // Pre-rendered static HTML share page on GitHub Pages with server-readable Open Graph tags.
-  // Facebook crawlers read the static OG tags and product image.
-  // Human visitors are automatically redirected to https://isratbdshop.blogspot.com/#product-ID
   return `${GITHUB_PAGES_SHARE_BASE}/${encodeURIComponent(productId)}.html`;
 }
 
@@ -32,9 +29,6 @@ export function generateDirectWhatsAppUrl(
   }
   const storeName = shopName || 'ইসরাত বিডি শপ';
 
-  // Safe Blogger hash deep-link that never triggers Blogger 404
-  const productDirectUrl = `https://isratbdshop.blogspot.com/#product-${encodeURIComponent(product.id)}`;
-
   const variantParts = [
     selectedSize ? `সাইজ: ${selectedSize}` : '',
     selectedColor ? `কালার: ${selectedColor}` : '',
@@ -50,7 +44,7 @@ export function generateDirectWhatsAppUrl(
     `মূল্য: ${formatBDT(originalPrice)}`,
     `অফার মূল্য: ${formatBDT(product.offerPrice)}`,
     `ক্যাটাগরি: ${product.categoryBn || product.category}`,
-    `পণ্যের লিংক: ${productDirectUrl}`,
+    `দোকানের লিংক: ${PUBLIC_BLOGGER_URL}`,
     '',
     'আমি এই পণ্যটি অর্ডার করতে চাই।'
   ];
@@ -83,9 +77,10 @@ export function openFacebookShare(product?: Product, customUrl?: string, shopNam
   }
 
   const quote = product
-    ? `${product.nameBn} - ${formatBDT(product.offerPrice)} | ${shopName}`
+    ? `${product.nameBn || product.name} - ${formatBDT(product.offerPrice)} | ${shopName}`
     : `${shopName} - বাংলাদেশের বিশ্বস্ত অনলাইন শপ। সাশ্রয়ী মূল্যে সেরা পণ্য ও ক্যাশ অন ডেলিভারি!`;
 
   const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}&quote=${encodeURIComponent(quote)}`;
   window.open(shareUrl, '_blank', 'width=600,height=500');
 }
+
