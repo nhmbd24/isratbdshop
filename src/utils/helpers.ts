@@ -3,6 +3,11 @@ import { Product, StoreSettings } from '../types';
 export const DEFAULT_WHATSAPP_NUMBER = '+8801712345678';
 export const DEFAULT_SHOP_PHONE = '01712-345678';
 export const DEFAULT_SHOP_NAME = 'Israt BD Shop | ইসরাত বিডি শপ';
+export const PUBLIC_BLOGGER_URL = 'https://isratbdshop.blogspot.com/';
+
+export function getPublicProductUrl(productId: string): string {
+  return `https://isratbdshop.blogspot.com/?product=${encodeURIComponent(productId)}`;
+}
 
 export function formatBDT(amount: number): string {
   return `৳${amount.toLocaleString('en-IN')}`;
@@ -23,10 +28,8 @@ export function generateDirectWhatsAppUrl(
   }
   const storeName = shopName || 'ইসরাত বিডি শপ';
 
-  const baseUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}${window.location.pathname}?product=${encodeURIComponent(product.id)}`
-      : '';
+  // Always use the official public Blogger URL for customer WhatsApp orders; NEVER expose github.io
+  const baseUrl = getPublicProductUrl(product.id);
 
   const variantParts = [
     selectedSize ? `সাইজ: ${selectedSize}` : '',
@@ -70,10 +73,20 @@ export function generateProductWhatsAppUrl(
 }
 
 export function openFacebookShare(product?: Product, customUrl?: string, shopName = DEFAULT_SHOP_NAME): void {
-  const urlToShare = customUrl || window.location.href;
+  // Always share through public Blogger site: https://isratbdshop.blogspot.com/
+  // NEVER expose nhmbd24.github.io or development domains
+  let urlToShare = customUrl;
+  if (!urlToShare) {
+    urlToShare = product?.id ? getPublicProductUrl(product.id) : PUBLIC_BLOGGER_URL;
+  }
+
+  if (urlToShare.includes('github.io') || urlToShare.includes('localhost') || urlToShare.includes('run.app')) {
+    urlToShare = product?.id ? getPublicProductUrl(product.id) : PUBLIC_BLOGGER_URL;
+  }
+
   const quote = product
-    ? `Check out ${product.nameBn} on ${shopName} at only ${formatBDT(product.offerPrice)}!`
-    : `Shop premium lifestyle & authentic products at ${shopName}!`;
+    ? `${product.nameBn} - ${formatBDT(product.offerPrice)} | ${shopName}`
+    : `${shopName} - বাংলাদেশের বিশ্বস্ত অনলাইন শপ। সাশ্রয়ী মূল্যে সেরা পণ্য ও ক্যাশ অন ডেলিভারি!`;
 
   const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}&quote=${encodeURIComponent(quote)}`;
   window.open(shareUrl, '_blank', 'width=600,height=500');

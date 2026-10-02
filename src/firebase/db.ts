@@ -262,54 +262,23 @@ export async function uploadImage(file: File, folder = 'products'): Promise<stri
 }
 
 
-// Seed initial products, categories, banners, settings if Firestore is empty
+// Guard against ever recreating deleted products, categories, or banners
+// Firestore is the ONLY source of truth. Once initialized, never re-seed!
 export async function seedInitialDataIfEmpty() {
   try {
-    // 1. Check settings
     const settingsDoc = await getDoc(doc(db, 'settings', 'store_config'));
-    if (!settingsDoc.exists()) {
-      await setDoc(doc(db, 'settings', 'store_config'), {
-        ...DEFAULT_SETTINGS,
-        updatedAt: new Date().toISOString(),
-      });
+    // If settings already exist, the store has already been initialized previously.
+    // NEVER recreate deleted products, banners, or categories!
+    if (settingsDoc.exists()) {
+      return;
     }
 
-    // 2. Check categories
-    const catSnap = await getDocs(collection(db, 'categories'));
-    if (catSnap.empty) {
-      for (const cat of DEFAULT_CATEGORIES) {
-        await setDoc(doc(db, 'categories', cat.id), {
-          ...cat,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    }
-
-    // 3. Check banners
-    const bannerSnap = await getDocs(collection(db, 'banners'));
-    if (bannerSnap.empty) {
-      for (const b of DEFAULT_BANNERS) {
-        await setDoc(doc(db, 'banners', b.id), {
-          ...b,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    }
-
-    // 4. Check products
-    const prodSnap = await getDocs(collection(db, 'products'));
-    if (prodSnap.empty) {
-      for (const p of DEMO_PRODUCTS) {
-        const sanitizedSeed = sanitizeProductForFirestore({
-          ...p,
-          isHidden: false,
-          isPopular: p.isFeatured || false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-        await setDoc(doc(db, 'products', p.id), sanitizedSeed);
-      }
-    }
+    // Only for brand new fresh database with 0 settings:
+    await setDoc(doc(db, 'settings', 'store_config'), {
+      ...DEFAULT_SETTINGS,
+      updatedAt: new Date().toISOString(),
+      initialSeedDone: true,
+    });
   } catch (error) {
     console.error('Error during initial seed check:', error);
   }

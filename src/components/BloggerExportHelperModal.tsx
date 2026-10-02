@@ -90,6 +90,40 @@ export const BloggerExportHelperModal: React.FC<BloggerExportHelperModalProps> =
                 </p>
               </div>
             </div>
+
+            {/* Facebook / Messenger Social Share Open Graph Tags for Blogger */}
+            <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-emerald-900 font-bold text-xs sm:text-sm">
+                  <Code className="w-4 h-4 text-emerald-700" />
+                  <span>ফেসবুক ও সোশ্যাল প্রিভিউ মেটা ট্যাগ (Blogger Theme-এর জন্য)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const snippet = `<meta property="og:type" content="website" />\n<meta property="og:site_name" content="isratbdshop.blogspot.com" />\n<meta property="og:title" content="Israt BD Shop | ইসরাত বিডি শপ" />\n<meta property="og:description" content="বাংলাদেশের বিশ্বস্ত অনলাইন শপ। সাশ্রয়ী মূল্যে সেরা পণ্য ও সারা দেশে ক্যাশ অন ডেলিভারি।" />\n<meta property="og:url" content="https://isratbdshop.blogspot.com/" />\n<meta property="og:image" content="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&h=630&q=85" />\n<meta name="twitter:card" content="summary_large_image" />\n<meta name="twitter:title" content="Israt BD Shop | ইসরাত বিডি শপ" />\n<meta name="twitter:description" content="বাংলাদেশের বিশ্বস্ত অনলাইন শপ। সাশ্রয়ী মূল্যে সেরা পণ্য ও সারা দেশে ক্যাশ অন ডেলিভারি।" />\n<meta name="twitter:image" content="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&h=630&q=85" />`;
+                    navigator.clipboard.writeText(snippet);
+                    alert('সোশ্যাল প্রিভিউ কোড কপি হয়েছে!');
+                  }}
+                  className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center space-x-1 cursor-pointer transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>কপি করুন</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-emerald-800">
+                ফেসবুক বা মেসেঞ্জারে <strong>https://isratbdshop.blogspot.com/</strong> শেয়ার করলে ছবি ও প্রিভিউ কার্ড সঠিকভাবে দেখানোর জন্য এই ট্যাগগুলো Blogger Theme &gt; Edit HTML-এ <code>&lt;head&gt;</code> এর নিচে পেস্ট করুন।
+              </p>
+              <pre className="p-2.5 bg-slate-900 text-emerald-300 rounded-xl text-[10px] sm:text-[11px] overflow-x-auto font-mono leading-relaxed select-all">
+{`<meta property="og:type" content="website" />
+<meta property="og:site_name" content="isratbdshop.blogspot.com" />
+<meta property="og:title" content="Israt BD Shop | ইসরাত বিডি শপ" />
+<meta property="og:description" content="বাংলাদেশের বিশ্বস্ত অনলাইন শপ। সাশ্রয়ী মূল্যে সেরা পণ্য ও সারা দেশে ক্যাশ অন ডেলিভারি।" />
+<meta property="og:url" content="https://isratbdshop.blogspot.com/" />
+<meta property="og:image" content="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&h=630&q=85" />
+<meta name="twitter:card" content="summary_large_image" />`}
+              </pre>
+            </div>
           </div>
 
           <div className="pt-2">

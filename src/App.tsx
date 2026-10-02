@@ -5,12 +5,8 @@ import {
   subscribeToCategories,
   subscribeToBanners,
   subscribeToSettings,
-  seedInitialDataIfEmpty,
   DEFAULT_SETTINGS,
-  DEFAULT_CATEGORIES,
-  DEFAULT_BANNERS,
 } from './firebase/db';
-import { DEMO_PRODUCTS } from './data/products';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
@@ -22,17 +18,25 @@ import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { BloggerExportHelperModal } from './components/BloggerExportHelperModal';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { SearchX, Check } from 'lucide-react';
+import { SearchX, Check, Loader2, Sparkles } from 'lucide-react';
 import { formatBDT } from './utils/helpers';
 
 function StorefrontApp() {
   const { currentUser, isAdmin, loading: authLoading } = useAuth();
 
-  // Firestore Live States with fallback defaults
-  const [products, setProducts] = useState<Product[]>(DEMO_PRODUCTS);
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
-  const [banners, setBanners] = useState<Banner[]>(DEFAULT_BANNERS);
+  // Firestore Live States - Firestore is the ONLY source of truth!
+  // Initialize with empty arrays so deleted items are NEVER briefly shown on refresh
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+
+  // Firestore Loading States: Ensure clean loading until real Firestore data is ready
+  const [isProductsLoaded, setIsProductsLoaded] = useState(false);
+  const [isCategoriesLoaded, setIsCategoriesLoaded] = useState(false);
+  const [isBannersLoaded, setIsBannersLoaded] = useState(false);
+
+  const isInitialLoading = !isProductsLoaded || !isCategoriesLoaded || !isBannersLoaded;
 
   // View mode
   const [viewMode, setViewMode] = useState<'storefront' | 'admin'>('storefront');
@@ -47,32 +51,21 @@ function StorefrontApp() {
   const [isBloggerModalOpen, setIsBloggerModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Seed Firestore if empty & subscribe to live updates
+  // Subscribe to live Firestore updates
   useEffect(() => {
-    seedInitialDataIfEmpty();
-
-    let initialLoad = true;
     const unsubProducts = subscribeToProducts((liveProducts) => {
-      if (liveProducts.length > 0 || !initialLoad) {
-        setProducts(liveProducts);
-      }
-      initialLoad = false;
+      setProducts(liveProducts);
+      setIsProductsLoaded(true);
     });
 
-    let initialCategoriesLoad = true;
     const unsubCategories = subscribeToCategories((liveCats) => {
-      if (liveCats.length > 0 || !initialCategoriesLoad) {
-        setCategories(liveCats);
-      }
-      initialCategoriesLoad = false;
+      setCategories(liveCats);
+      setIsCategoriesLoaded(true);
     });
 
-    let initialBannersLoad = true;
     const unsubBanners = subscribeToBanners((liveBanners) => {
-      if (liveBanners.length > 0 || !initialBannersLoad) {
-        setBanners(liveBanners);
-      }
-      initialBannersLoad = false;
+      setBanners(liveBanners);
+      setIsBannersLoaded(true);
     });
 
     const unsubSettings = subscribeToSettings((liveSettings) => {
@@ -235,6 +228,33 @@ function StorefrontApp() {
   const handleBannerDeleted = (deletedId: string) => {
     setBanners((prev) => prev.filter((b) => b.id !== deletedId));
   };
+
+  // While Firestore data is loading, show loading state and NEVER show old/default products
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-sm w-full bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl flex flex-col items-center text-center space-y-4 animate-in fade-in duration-300">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-inner relative">
+            <Sparkles className="w-8 h-8 text-emerald-600 animate-pulse" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 bengali-font">
+              {settings?.shopNameBn || 'ইসরাত বিডি শপ'}
+            </h2>
+            <p className="text-xs text-slate-500 font-medium bengali-font">
+              দোকানের তথ্য ও পণ্য লোড হচ্ছে...
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-200/60">
+            <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+            <span className="bengali-font">অনুগ্রহ করে একটু অপেক্ষা করুন</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // If Admin View is active and user is admin
   if (viewMode === 'admin' && isAdmin) {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Truck, ShieldCheck, Clock, MessageSquare, ChevronRight, ChevronLeft, Sparkles, ArrowRight } from 'lucide-react';
 import { Banner, StoreSettings } from '../types';
-import { DEFAULT_BANNERS } from '../firebase/db';
 
 interface HeroBannerProps {
   banners?: Banner[];
@@ -18,12 +17,25 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const activeBanners = (banners && banners.length > 0
+  const activeBanners = (banners && banners.length > 0)
     ? banners.filter((b) => !b.isHidden)
-    : DEFAULT_BANNERS
-  );
+    : [];
 
-  const slides = activeBanners.length > 0 ? activeBanners : DEFAULT_BANNERS;
+  const genericWelcomeBanner: Banner = {
+    id: 'store-welcome-banner',
+    badge: '🛍️ ইসরাত বিডি শপ - সেরা অনলাইন শপিং',
+    title: settings?.shopNameBn || settings?.shopName || 'ইসরাত বিডি শপ',
+    subtitle: 'সারা বাংলাদেশে দ্রুত হোম ডেলিভারি ও ১০০% ক্যাশ অন ডেলিভারি সুবিধা। খাঁটি ও মানসম্মত পণ্যের বিশ্বস্ত প্রতিষ্ঠান।',
+    ctaText: 'পণ্য দেখুন',
+    categoryTarget: 'all',
+    bgGradient: 'from-emerald-950 via-teal-900 to-slate-900',
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1000&q=80',
+    discountBadge: 'সেরা অফার',
+    isHidden: false,
+    orderIndex: 1,
+  };
+
+  const slides = activeBanners.length > 0 ? activeBanners : [genericWelcomeBanner];
 
   useEffect(() => {
     if (slides.length <= 1) return;
