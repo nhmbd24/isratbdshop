@@ -136,45 +136,34 @@ function StorefrontApp() {
   }, [selectedProduct]);
 
   // Helper to extract productId from hash (#product-ID) or query param (?product=ID)
-  // Using hash is 100% safe on Blogger because hash fragments are never sent to the Blogger server
+  // Using hash is safe on Blogger because hash fragments are never sent to the Blogger server
   const getInitialProductId = (): string | null => {
     try {
-      // 1. Hash-based check
+      // 1. Hash-based check (#product-PRODUCT_ID or #p-PRODUCT_ID)
       const hash = window.location.hash;
-      const hashMatch = hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-      if (hashMatch) {
-        return decodeURIComponent(hashMatch[1]);
-      }
-
-      // 2. Query param fallback
-      const urlParams = new URLSearchParams(window.location.search);
-      const queryId = urlParams.get('product') || urlParams.get('p');
-      if (queryId) {
-        return decodeURIComponent(queryId);
-      }
-
-      // 3. Parent frame hash check (if embedded on Blogger via iframe)
-      try {
-        if (window.parent && window.parent !== window && window.parent.location.hash) {
-          const parentHashMatch = window.parent.location.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-          if (parentHashMatch) {
-            return decodeURIComponent(parentHashMatch[1]);
-          }
+      if (hash) {
+        const hashMatch = hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
+        if (hashMatch) {
+          return decodeURIComponent(hashMatch[1]);
         }
-      } catch {}
+      }
+
+      // 2. Query param fallback (?product=PRODUCT_ID or ?p=PRODUCT_ID)
+      if (window.location.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryId = urlParams.get('product') || urlParams.get('p');
+        if (queryId) {
+          return decodeURIComponent(queryId);
+        }
+      }
     } catch {}
     return null;
   };
 
   const cleanHashIfPresent = () => {
-    if (window.location.hash) {
-      try {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      } catch {}
-    }
     try {
-      if (window.parent && window.parent !== window && window.parent.location.hash) {
-        window.parent.history.replaceState(null, '', window.parent.location.pathname + window.parent.location.search);
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
       }
     } catch {}
   };

@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(() => {
   const port = parseInt(process.env.PORT || '3000', 10);
   return {
+    base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
