@@ -91,6 +91,19 @@ export const BloggerExportHelperModal: React.FC<BloggerExportHelperModalProps> =
               </div>
             </div>
 
+            {/* Blogger Mobile Settings Fix */}
+            <div className="flex items-start space-x-3 p-3 bg-amber-50/70 rounded-xl border border-amber-200">
+              <span className="w-6 h-6 rounded-full bg-amber-600 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                ৪
+              </span>
+              <div>
+                <strong className="text-amber-950 font-bold">ফেসবুক ব্রাউজারে &quot;No posts&quot; বা &quot;View web version&quot; বন্ধ করার নিয়ম:</strong>
+                <p className="text-xs text-amber-900 mt-1 leading-relaxed">
+                  Blogger ড্যাশবোর্ডে যান &gt; <strong>Theme</strong>-এ যান &gt; &quot;Customize&quot; এর পাশের ছোট ড্রপডাউন তীরে ক্লিক করুন &gt; <strong>Mobile settings</strong> নির্বাচন করুন &gt; <strong>&quot;Desktop&quot;</strong> সিলেক্ট করে Save করুন। এর ফলে ফেসবুক বা মোবাইলে কখনো ব্লগারের পুরোনো &quot;পোস্ট নেই&quot; পেজ আসবে না, সরাসরি সম্পূর্ণ শপ ওপেন হবে।
+                </p>
+              </div>
+            </div>
+
             {/* Facebook / Messenger Social Share Open Graph Tags for Blogger */}
             <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">

@@ -43,9 +43,8 @@ async function startServer() {
   function injectProductMetaTags(html: string, product: any) {
     if (!product) return html;
 
-    const shopName = 'Israt BD Shop | ইসরাত বিডি শপ';
-    const publicDomain = 'https://isratbdshop.blogspot.com';
-    const productUrl = `${publicDomain}/product/${encodeURIComponent(product.id)}`;
+    const shopName = 'Israt BD Shop';
+    const canonicalUrl = `https://nhmbd24.github.io/isratbdshop/share/${encodeURIComponent(product.id)}.html`;
     const title = `${product.nameBn || product.name} - ৳${(product.offerPrice || 0).toLocaleString('en-IN')} | ${shopName}`;
     const rawDesc = product.shortDescBn || product.shortDesc || product.fullDescBn || product.categoryBn || '';
     const cleanDesc = rawDesc.replace(/\s+/g, ' ').trim().slice(0, 180);
@@ -64,6 +63,10 @@ async function startServer() {
 
     // 2. Open Graph Tags
     result = result.replace(
+      /<meta\s+property=["']og:site_name["']\s+content=["'].*?["']\s*\/?>/i,
+      `<meta property="og:site_name" content="${escapeHtml(shopName)}" />`
+    );
+    result = result.replace(
       /<meta\s+property=["']og:title["']\s+content=["'].*?["']\s*\/?>/i,
       `<meta property="og:title" content="${escapeHtml(title)}" />`
     );
@@ -81,7 +84,7 @@ async function startServer() {
     );
     result = result.replace(
       /<meta\s+property=["']og:url["']\s+content=["'].*?["']\s*\/?>/i,
-      `<meta property="og:url" content="${escapeHtml(productUrl)}" />`
+      `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`
     );
     result = result.replace(
       /<meta\s+property=["']og:type["']\s+content=["'].*?["']\s*\/?>/i,
@@ -105,7 +108,7 @@ async function startServer() {
     // 4. Canonical Tag
     result = result.replace(
       /<link\s+rel=["']canonical["']\s+href=["'].*?["']\s*\/?>/i,
-      `<link rel="canonical" href="${escapeHtml(productUrl)}" />`
+      `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`
     );
 
     return result;
@@ -139,12 +142,21 @@ async function startServer() {
     try {
       let productId: string | undefined;
 
-      // Extract productId from path: /product/:id or /p/:id
-      const pathMatch = url.match(/^\/(?:product|p)\/([^/?#]+)/i);
+      // Extract productId from path: /share/:id, /product/:id, /p/:id or query ?product=:id
+      const pathMatch = url.match(/^\/(?:share|product|p)\/([^/?#.]+)/i);
       if (pathMatch) {
         productId = decodeURIComponent(pathMatch[1]);
       } else if (req.query.product && typeof req.query.product === 'string') {
         productId = req.query.product;
+      }
+
+      // Detect social media crawlers
+      const userAgent = req.headers['user-agent'] || '';
+      const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Pinterest|Slackbot/i.test(userAgent);
+
+      // If a human visitor navigates directly to /share/:id or /product/:id, redirect to Blogger with hash
+      if (productId && !isCrawler && (url.startsWith('/share') || url.startsWith('/product') || url.startsWith('/p/'))) {
+        return res.redirect(302, `https://isratbdshop.blogspot.com/#product-${encodeURIComponent(productId)}`);
       }
 
       let template = '';
@@ -160,8 +172,14 @@ async function startServer() {
         }
       }
 
-      // If viewing a specific product, inject its exact Firestore details into HTML before sending
+      // If viewing a specific product, check pre-rendered static share file first, then Firestore
       if (productId) {
+        const staticShareFile = path.resolve(__dirname, 'dist', 'share', `${productId}.html`);
+        if (fs.existsSync(staticShareFile)) {
+          const shareHtml = fs.readFileSync(staticShareFile, 'utf-8');
+          return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(shareHtml);
+        }
+
         const product = await getProductData(productId);
         if (product) {
           template = injectProductMetaTags(template, product);
