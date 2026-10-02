@@ -5,12 +5,6 @@ export const DEFAULT_SHOP_PHONE = '01712-345678';
 export const DEFAULT_SHOP_NAME = 'Israt BD Shop | ইসরাত বিডি শপ';
 export const PUBLIC_BLOGGER_URL = 'https://isratbdshop.blogspot.com/';
 
-export function getPublicProductUrl(productId: string): string {
-  // Blogger does not support custom paths like /product/ID (returns 404).
-  // Use Blogger-compatible query parameter: https://isratbdshop.blogspot.com/?product=ID
-  return `https://isratbdshop.blogspot.com/?product=${encodeURIComponent(productId)}`;
-}
-
 export function formatBDT(amount: number): string {
   return `৳${amount.toLocaleString('en-IN')}`;
 }
@@ -30,8 +24,7 @@ export function generateDirectWhatsAppUrl(
   }
   const storeName = shopName || 'ইসরাত বিডি শপ';
 
-  // Always use the official public Blogger URL for customer WhatsApp orders; NEVER expose github.io
-  const baseUrl = getPublicProductUrl(product.id);
+  const baseUrl = PUBLIC_BLOGGER_URL;
 
   const variantParts = [
     selectedSize ? `সাইজ: ${selectedSize}` : '',
@@ -48,7 +41,7 @@ export function generateDirectWhatsAppUrl(
     `মূল্য: ${formatBDT(originalPrice)}`,
     `অফার মূল্য: ${formatBDT(product.offerPrice)}`,
     `ক্যাটাগরি: ${product.categoryBn || product.category}`,
-    `পণ্যের লিংক: ${baseUrl}`,
+    `শপের লিংক: ${baseUrl}`,
     '',
     'আমি এই পণ্যটি অর্ডার করতে চাই।'
   ];
@@ -77,14 +70,7 @@ export function generateProductWhatsAppUrl(
 export function openFacebookShare(product?: Product, customUrl?: string, shopName = DEFAULT_SHOP_NAME): void {
   // Always share through public Blogger site: https://isratbdshop.blogspot.com/
   // NEVER expose nhmbd24.github.io or development domains
-  let urlToShare = customUrl;
-  if (!urlToShare) {
-    urlToShare = product?.id ? getPublicProductUrl(product.id) : PUBLIC_BLOGGER_URL;
-  }
-
-  if (urlToShare.includes('github.io') || urlToShare.includes('localhost') || urlToShare.includes('run.app')) {
-    urlToShare = product?.id ? getPublicProductUrl(product.id) : PUBLIC_BLOGGER_URL;
-  }
+  const urlToShare = customUrl || PUBLIC_BLOGGER_URL;
 
   const quote = product
     ? `${product.nameBn} - ${formatBDT(product.offerPrice)} | ${shopName}`
