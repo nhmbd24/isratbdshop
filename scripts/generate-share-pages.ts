@@ -46,7 +46,8 @@ function buildProductHtml(product: any, storeSettings?: any): string {
   const hotline = storeSettings?.phoneNumber || '01712-345678';
 
   const canonicalUrl = `https://nhmbd24.github.io/isratbdshop/share/${encodeURIComponent(product.id)}.html`;
-  const bloggerShopUrl = `https://isratbdshop.blogspot.com/#product-${encodeURIComponent(product.id)}`;
+  const bloggerProductDestination = `https://isratbdshop.blogspot.com/?product=${encodeURIComponent(product.id)}#product-${encodeURIComponent(product.id)}`;
+  const bloggerShopUrl = bloggerProductDestination;
 
   const nameBn = product.nameBn || product.name || 'পণ্য';
   const nameEn = product.name || '';
@@ -118,6 +119,38 @@ function buildProductHtml(product: any, storeSettings?: any): string {
   <meta name="twitter:image" content="${escapeHtml(exactProductImage)}">
 
   <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
+
+  <!-- Crawler-Safe Human Redirect to Exact Blogger Product Details -->
+  <script>
+    (function() {
+      try {
+        var ua = (navigator.userAgent || '').toLowerCase();
+        var isCrawler =
+          ua.indexOf('facebookexternalhit') !== -1 ||
+          ua.indexOf('facebot') !== -1 ||
+          ua.indexOf('facebookcatalog') !== -1 ||
+          ua.indexOf('meta-externalagent') !== -1 ||
+          ua.indexOf('meta-externalfetcher') !== -1 ||
+          ua.indexOf('whatsapp') !== -1 ||
+          ua.indexOf('twitterbot') !== -1 ||
+          ua.indexOf('linkedinbot') !== -1 ||
+          ua.indexOf('telegrambot') !== -1 ||
+          ua.indexOf('pinterest') !== -1 ||
+          ua.indexOf('slackbot') !== -1 ||
+          ua.indexOf('discordbot') !== -1 ||
+          ua.indexOf('googlebot') !== -1 ||
+          ua.indexOf('bingbot') !== -1 ||
+          ua.indexOf('applebot') !== -1 ||
+          ua.indexOf('yandex') !== -1 ||
+          ua.indexOf('duckduckbot') !== -1;
+
+        // Redirect normal human browser visitors to exact product on Blogger
+        if (!isCrawler) {
+          window.location.replace(${JSON.stringify(bloggerProductDestination)});
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <style>
     * {

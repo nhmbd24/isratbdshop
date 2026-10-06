@@ -141,29 +141,50 @@ function StorefrontApp() {
     const checkTargetProduct = () => {
       try {
         let targetId: string | null = null;
-        // 1. Check window.location.hash
-        const hash = window.location.hash;
-        if (hash) {
-          const match = hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-          if (match) targetId = decodeURIComponent(match[1]);
-        }
-        // 2. Check query param (?product=ID)
-        if (!targetId && window.location.search) {
+        // 1. Check window.location.search (?product=ID)
+        if (window.location.search) {
           const params = new URLSearchParams(window.location.search);
           const p = params.get('product') || params.get('p') || params.get('id');
           if (p) targetId = p;
         }
-        // 3. Check parent frame hash if accessible (same origin or cross-origin safe check)
-        if (!targetId) {
+        // 2. Check window.location.hash (#product-ID)
+        if (!targetId && window.location.hash) {
+          const match = window.location.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
+          if (match) targetId = decodeURIComponent(match[1]);
+        }
+        // 3. Check document.referrer (when loaded inside Blogger iframe)
+        if (!targetId && typeof document !== 'undefined' && document.referrer) {
           try {
-            if (window.parent && window.parent !== window && window.parent.location.hash) {
+            const refUrl = new URL(document.referrer);
+            const refParam = refUrl.searchParams.get('product') || refUrl.searchParams.get('p') || refUrl.searchParams.get('id');
+            if (refParam) {
+              targetId = refParam;
+            } else if (refUrl.hash) {
+              const rMatch = refUrl.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
+              if (rMatch) targetId = decodeURIComponent(rMatch[1]);
+            }
+          } catch {}
+        }
+        // 4. Check parent frame if accessible (same-origin check)
+        if (!targetId && typeof window !== 'undefined' && window.parent && window.parent !== window) {
+          try {
+            if (window.parent.location.search) {
+              const pParams = new URLSearchParams(window.parent.location.search);
+              const p = pParams.get('product') || pParams.get('p') || pParams.get('id');
+              if (p) targetId = p;
+            }
+          } catch {}
+          try {
+            if (!targetId && window.parent.location.hash) {
               const pMatch = window.parent.location.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
               if (pMatch) targetId = decodeURIComponent(pMatch[1]);
             }
           } catch {}
         }
         if (targetId) {
-          const found = products.find((p) => p.id === targetId);
+          const found = products.find(
+            (p) => p.id === targetId || String(p.id).toLowerCase() === targetId!.toLowerCase()
+          );
           if (found && (!selectedProductRef.current || selectedProductRef.current.id !== found.id)) {
             setSelectedProduct(found);
           }
@@ -173,7 +194,31 @@ function StorefrontApp() {
 
     checkTargetProduct();
     window.addEventListener('hashchange', checkTargetProduct);
-    return () => window.removeEventListener('hashchange', checkTargetProduct);
+    window.addEventListener('popstate', checkTargetProduct);
+
+    // Also support window message if parent frame posts target product
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        if (event.data && typeof event.data === 'object') {
+          const pid = event.data.productId || event.data.product;
+          if (pid && typeof pid === 'string') {
+            const found = products.find(
+              (p) => p.id === pid || String(p.id).toLowerCase() === pid.toLowerCase()
+            );
+            if (found && (!selectedProductRef.current || selectedProductRef.current.id !== found.id)) {
+              setSelectedProduct(found);
+            }
+          }
+        }
+      } catch {}
+    };
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('hashchange', checkTargetProduct);
+      window.removeEventListener('popstate', checkTargetProduct);
+      window.removeEventListener('message', handleMessage);
+    };
   }, [products]);
 
   // Open product details as a full-screen view inside the React app (never alters Blogger parent URL)

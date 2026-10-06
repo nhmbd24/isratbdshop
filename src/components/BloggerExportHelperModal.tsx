@@ -127,11 +127,15 @@ export const BloggerExportHelperModal: React.FC<BloggerExportHelperModalProps> =
       var clean = window.location.protocol + '//' + window.location.host + window.location.pathname + window.location.hash;
       window.location.replace(clean);
     }
-    // Forward product hash to shop iframe
+    // Forward product parameter and hash to shop iframe
     window.addEventListener('DOMContentLoaded', function() {
-      if (window.location.hash) {
-        var f = document.getElementById('israt-shop-frame');
-        if (f) f.src = 'https://nhmbd24.github.io/isratbdshop/' + window.location.hash;
+      var f = document.getElementById('israt-shop-frame');
+      if (f) {
+        var query = window.location.search || '';
+        var hash = window.location.hash || '';
+        if (query || hash) {
+          f.src = 'https://nhmbd24.github.io/isratbdshop/' + query + hash;
+        }
       }
     });
   </script>
