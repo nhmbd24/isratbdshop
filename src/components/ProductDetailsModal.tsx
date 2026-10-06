@@ -332,7 +332,7 @@ export const ProductDetailsPage: React.FC<ProductDetailsModalProps> = ({
                     className="w-full py-3.5 sm:py-4 px-4 bg-[#25D366] hover:bg-[#20ba59] active:bg-[#1caa51] text-white font-black rounded-2xl shadow-lg shadow-[#25D366]/25 flex items-center justify-center space-x-2 text-base transition-all cursor-pointer active:scale-98 disabled:opacity-50 touch-manipulation group"
                   >
                     <MessageCircle className="w-5 h-5 fill-current text-white shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="bengali-font tracking-wide">WhatsApp-এ অর্ডার করুন</span>
+                    <span className="bengali-font tracking-wide">WhatsApp অর্ডার</span>
                   </button>
 
                   <button

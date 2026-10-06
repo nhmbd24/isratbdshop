@@ -36,6 +36,7 @@ export function generateDirectWhatsAppUrl(
   const variantStr = variantParts.length > 0 ? ` (${variantParts.join(', ')})` : '';
 
   const originalPrice = product.originalPrice > 0 ? product.originalPrice : product.offerPrice;
+  const shareUrl = getProductShareUrl(product.id);
 
   const lines = [
     storeName,
@@ -44,7 +45,7 @@ export function generateDirectWhatsAppUrl(
     `মূল্য: ${formatBDT(originalPrice)}`,
     `অফার মূল্য: ${formatBDT(product.offerPrice)}`,
     `ক্যাটাগরি: ${product.categoryBn || product.category}`,
-    `দোকানের লিংক: ${PUBLIC_BLOGGER_URL}`,
+    `পণ্য লিংক: ${shareUrl}`,
     '',
     'আমি এই পণ্যটি অর্ডার করতে চাই।'
   ];

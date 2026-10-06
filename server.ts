@@ -23,6 +23,9 @@ async function startServer() {
     app.use(express.static(path.resolve(__dirname, 'dist'), { index: false }));
   }
 
+  // Serve pre-generated share pages if requested directly
+  app.use('/share', express.static(path.resolve(__dirname, 'dist/share')));
+
   // Handle storefront requests cleanly
   app.get('*', async (req, res, next) => {
     const url = req.originalUrl;
