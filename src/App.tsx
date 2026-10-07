@@ -1,15 +1,13 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Product, Category, Banner, StoreSettings } from './types';
+import { Product, Category, StoreSettings } from './types';
 import {
   subscribeToProducts,
   subscribeToCategories,
-  subscribeToBanners,
   subscribeToSettings,
   DEFAULT_SETTINGS,
 } from './firebase/db';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/Header';
-import { HeroBanner } from './components/HeroBanner';
 import { CategoryFilter } from './components/CategoryFilter';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailsPage } from './components/ProductDetailsModal';
@@ -18,23 +16,20 @@ import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { BloggerExportHelperModal } from './components/BloggerExportHelperModal';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { SearchX, Check } from 'lucide-react';
+import { Search, X, SearchX, Check } from 'lucide-react';
 import { formatBDT } from './utils/helpers';
 
 function StorefrontApp() {
   const { currentUser, isAdmin, loading: authLoading } = useAuth();
 
   // Firestore Live States - Firestore is the ONLY source of truth!
-  // Initialize with empty arrays so deleted items are NEVER briefly shown on refresh
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
 
   // Firestore background synchronization states - loads silently in background
   const [isProductsLoaded, setIsProductsLoaded] = useState(false);
   const [isCategoriesLoaded, setIsCategoriesLoaded] = useState(false);
-  const [isBannersLoaded, setIsBannersLoaded] = useState(false);
 
   // View mode
   const [viewMode, setViewMode] = useState<'storefront' | 'admin'>('storefront');
@@ -61,11 +56,6 @@ function StorefrontApp() {
       setIsCategoriesLoaded(true);
     });
 
-    const unsubBanners = subscribeToBanners((liveBanners) => {
-      setBanners(liveBanners);
-      setIsBannersLoaded(true);
-    });
-
     const unsubSettings = subscribeToSettings((liveSettings) => {
       setSettings(liveSettings);
     });
@@ -73,7 +63,6 @@ function StorefrontApp() {
     return () => {
       unsubProducts();
       unsubCategories();
-      unsubBanners();
       unsubSettings();
     };
   }, []);
@@ -147,10 +136,11 @@ function StorefrontApp() {
           const p = params.get('product') || params.get('p') || params.get('id');
           if (p) targetId = p;
         }
-        // 2. Check window.location.hash (#product-ID)
+        // 2. Check window.location.hash (#product-ID or #ID)
         if (!targetId && window.location.hash) {
-          const match = window.location.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-          if (match) targetId = decodeURIComponent(match[1]);
+          const rawHash = window.location.hash.replace(/^#/, '');
+          const match = rawHash.match(/(?:product[-=]|p[-=])?([^&]+)/i);
+          if (match && match[1]) targetId = decodeURIComponent(match[1]);
         }
         // 3. Check document.referrer (when loaded inside Blogger iframe)
         if (!targetId && typeof document !== 'undefined' && document.referrer) {
@@ -160,8 +150,9 @@ function StorefrontApp() {
             if (refParam) {
               targetId = refParam;
             } else if (refUrl.hash) {
-              const rMatch = refUrl.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-              if (rMatch) targetId = decodeURIComponent(rMatch[1]);
+              const rHash = refUrl.hash.replace(/^#/, '');
+              const rMatch = rHash.match(/(?:product[-=]|p[-=])?([^&]+)/i);
+              if (rMatch && rMatch[1]) targetId = decodeURIComponent(rMatch[1]);
             }
           } catch {}
         }
@@ -176,14 +167,20 @@ function StorefrontApp() {
           } catch {}
           try {
             if (!targetId && window.parent.location.hash) {
-              const pMatch = window.parent.location.hash.match(/#(?:product[-=]|p[-=])([^&]+)/i);
-              if (pMatch) targetId = decodeURIComponent(pMatch[1]);
+              const pHash = window.parent.location.hash.replace(/^#/, '');
+              const pMatch = pHash.match(/(?:product[-=]|p[-=])?([^&]+)/i);
+              if (pMatch && pMatch[1]) targetId = decodeURIComponent(pMatch[1]);
             }
           } catch {}
         }
         if (targetId) {
+          const cleanId = targetId.replace(/^(?:product[-=]|p[-=])/, '').trim();
           const found = products.find(
-            (p) => p.id === targetId || String(p.id).toLowerCase() === targetId!.toLowerCase()
+            (p) =>
+              p.id === targetId ||
+              p.id === cleanId ||
+              String(p.id).toLowerCase() === targetId!.toLowerCase() ||
+              String(p.id).toLowerCase() === cleanId.toLowerCase()
           );
           if (found && (!selectedProductRef.current || selectedProductRef.current.id !== found.id)) {
             setSelectedProduct(found);
@@ -202,8 +199,13 @@ function StorefrontApp() {
         if (event.data && typeof event.data === 'object') {
           const pid = event.data.productId || event.data.product;
           if (pid && typeof pid === 'string') {
+            const cleanId = pid.replace(/^(?:product[-=]|p[-=])/, '').trim();
             const found = products.find(
-              (p) => p.id === pid || String(p.id).toLowerCase() === pid.toLowerCase()
+              (p) =>
+                p.id === pid ||
+                p.id === cleanId ||
+                String(p.id).toLowerCase() === pid.toLowerCase() ||
+                String(p.id).toLowerCase() === cleanId.toLowerCase()
             );
             if (found && (!selectedProductRef.current || selectedProductRef.current.id !== found.id)) {
               setSelectedProduct(found);
@@ -283,22 +285,16 @@ function StorefrontApp() {
     setCategories((prev) => prev.filter((c) => c.id !== deletedId));
   };
 
-  const handleBannerDeleted = (deletedId: string) => {
-    setBanners((prev) => prev.filter((b) => b.id !== deletedId));
-  };
-
   // If Admin View is active and user is admin
   if (viewMode === 'admin' && isAdmin) {
     return (
       <AdminDashboard
         products={products}
         categories={categories}
-        banners={banners}
         settings={settings}
         onExitAdmin={() => setViewMode('storefront')}
         onProductDeleted={handleProductDeleted}
         onCategoryDeleted={handleCategoryDeleted}
-        onBannerDeleted={handleBannerDeleted}
       />
     );
   }
@@ -328,35 +324,39 @@ function StorefrontApp() {
         </div>
       )}
 
-      {/* Main Header */}
+      {/* 1. Header with logo and shop name */}
       <Header
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         onSelectCategory={(catId) => setSelectedCategory(catId)}
-        activeCategory={selectedCategory}
         settings={settings}
         onOpenAdmin={handleOpenAdmin}
         isAdmin={isAdmin}
       />
 
-      {/* Hero Banner with Live Firestore Carousel & Trust Badges */}
-      {!searchQuery && (
-        <HeroBanner
-          banners={banners}
-          settings={settings}
-          onShopNow={() => {
-            const el = document.getElementById('products-grid');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }}
-          onSelectCategory={(catId) => {
-            setSelectedCategory(catId);
-            const el = document.getElementById('products-grid');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }}
-        />
-      )}
+      {/* 2. Search bar (immediately below header) */}
+      <div className="w-full max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 pt-3 pb-1">
+        <div className="relative max-w-2xl mx-auto">
+          <div className="absolute inset-y-0 left-0 pl-3.5 sm:pl-4 flex items-center pointer-events-none text-slate-400">
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="পণ্য বা মডেল সার্চ করুন (যেমন: শাড়ি, জামদানি, থ্রি-পিস, ওয়াচ, মধু...)"
+            className="w-full pl-10 sm:pl-12 pr-10 py-2.5 sm:py-3 bg-white text-xs sm:text-sm rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-slate-400"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-3 sm:pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
-      {/* Category Section Filter */}
+      {/* 3. Categories (immediately below search) */}
       <CategoryFilter
         categories={categories}
         selectedCategory={selectedCategory}
@@ -364,20 +364,20 @@ function StorefrontApp() {
         productCounts={categoryCounts}
       />
 
-      {/* Main Product Showcase Section */}
-      <main id="products-grid" className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 w-full min-w-0">
+      {/* 4. Products grid (immediately below categories) */}
+      <main id="products-grid" className="flex-1 max-w-7xl mx-auto px-1.5 xs:px-2 sm:px-6 lg:px-8 py-3 sm:py-6 w-full min-w-0 max-w-full">
         {/* Section Header with title and sorting */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 sm:pb-4 mb-4 border-b border-slate-200/80 gap-3 w-full min-w-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2.5 sm:pb-4 mb-3 sm:mb-4 border-b border-slate-200/80 gap-2 sm:gap-3 w-full min-w-0">
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight bengali-font">
+              <h2 className="text-base sm:text-2xl font-black text-slate-900 tracking-tight bengali-font">
                 {searchQuery ? `"${searchQuery}" এর সার্চ ফলাফল` : 'আমাদের জনপ্রিয় পণ্যসমূহ'}
               </h2>
-              <span className="bg-emerald-100 text-emerald-800 text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
                 {filteredProducts.length} টি পণ্য
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5 bengali-font">
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 bengali-font">
               সারা বাংলাদেশে হোম ডেলিভারি ও ক্যাশ অন ডেলিভারি সুবিধা
             </p>
           </div>
@@ -391,7 +391,7 @@ function StorefrontApp() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-3 py-2 text-slate-700 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer transition-all"
+                className="text-xs font-semibold bg-white border border-slate-200 hover:border-slate-300 rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 text-slate-700 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 cursor-pointer transition-all"
               >
                 <option value="featured">জনপ্রিয় ও ফিচার্ড</option>
                 <option value="price-low">দাম: কম থেকে বেশি</option>
@@ -402,9 +402,11 @@ function StorefrontApp() {
           </div>
         </div>
 
-        {/* Product Grid */}
+        {/* Product Grid: Mobile EXACTLY 3 cards per row via repeat(3, minmax(0, 1fr)) */}
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 w-full min-w-0">
+          <div
+            className="grid mobile-3-cols-grid [grid-template-columns:repeat(3,minmax(0,1fr))] sm:[grid-template-columns:repeat(2,minmax(0,1fr))] md:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:[grid-template-columns:repeat(4,minmax(0,1fr))] gap-1.5 xs:gap-2 sm:gap-4 lg:gap-6 w-full min-w-0 max-w-full overflow-hidden"
+          >
             {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}
@@ -416,16 +418,18 @@ function StorefrontApp() {
           </div>
         ) : !isProductsLoaded ? (
           /* Silent background load: light placeholder skeleton */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 w-full min-w-0">
-            {[1, 2, 3, 4].map((i) => (
+          <div
+            className="grid mobile-3-cols-grid [grid-template-columns:repeat(3,minmax(0,1fr))] sm:[grid-template-columns:repeat(2,minmax(0,1fr))] md:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:[grid-template-columns:repeat(4,minmax(0,1fr))] gap-1.5 xs:gap-2 sm:gap-4 lg:gap-6 w-full min-w-0 max-w-full overflow-hidden"
+          >
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-4 space-y-3 animate-pulse"
+                className="bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 p-2 sm:p-4 space-y-2 sm:space-y-3 animate-pulse"
               >
-                <div className="aspect-square w-full bg-slate-100 rounded-xl" />
-                <div className="h-4 bg-slate-100 rounded w-3/4" />
-                <div className="h-4 bg-slate-100 rounded w-1/2" />
-                <div className="h-9 bg-slate-100 rounded-xl w-full" />
+                <div className="aspect-square w-full bg-slate-100 rounded-lg sm:rounded-xl" />
+                <div className="h-3 bg-slate-100 rounded w-3/4" />
+                <div className="h-3 bg-slate-100 rounded w-1/2" />
+                <div className="h-6 sm:h-9 bg-slate-100 rounded-lg sm:rounded-xl w-full" />
               </div>
             ))}
           </div>

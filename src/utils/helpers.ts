@@ -79,8 +79,9 @@ export function generateProductWhatsAppUrl(
 export function openFacebookShare(product?: Product, customUrl?: string, shopName = DEFAULT_SHOP_NAME): void {
   const urlToShare = customUrl || (product?.id ? getProductShareUrl(product.id) : PUBLIC_BLOGGER_URL);
 
+  // Keep exact product name and shop name, remove all prices/discounts
   const quote = product
-    ? `${product.nameBn || product.name} - ${formatBDT(product.offerPrice)} | ${shopName}`
+    ? `${product.nameBn || product.name} | ${shopName}`
     : `${shopName} - বাংলাদেশের বিশ্বস্ত অনলাইন শপ। সাশ্রয়ী মূল্যে সেরা পণ্য ও ক্যাশ অন ডেলিভারি!`;
 
   const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}&quote=${encodeURIComponent(quote)}`;
@@ -99,8 +100,8 @@ export async function shareProductWithNavigator(
   shopName = DEFAULT_SHOP_NAME
 ): Promise<boolean> {
   const shareUrl = getProductShareUrl(product.id);
-  const title = `${product.nameBn || product.name} - ${formatBDT(product.offerPrice)} | ${shopName}`;
-  const text = `${product.nameBn || product.name} - অফার মূল্য: ${formatBDT(product.offerPrice)} | ইসরাত বিডি শপ`;
+  const title = `${product.nameBn || product.name} | ${shopName}`;
+  const text = `${product.nameBn || product.name} | ${shopName}`;
 
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
     try {

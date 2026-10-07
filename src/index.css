@@ -50,14 +50,13 @@ img, video, canvas, svg {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Custom scrollbar for desktop */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Mobile 3-column product grid */
+@media (max-width: 639px) {
+  .mobile-3-cols-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
 }
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;

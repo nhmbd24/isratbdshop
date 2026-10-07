@@ -58,13 +58,21 @@ function buildProductHtml(product: any, storeSettings?: any): string {
   const savings = originalPrice > offerPrice ? originalPrice - offerPrice : 0;
   const savingsFormatted = savings > 0 ? `৳${savings.toLocaleString('en-IN')}` : '';
 
-  // Open Graph Title: exact product name + current price + shop name
-  const ogTitle = `${nameBn} - ${priceFormatted} | ${shopName}`;
+  // Open Graph Title: exact product name + shop name (Strictly NO price, currency, or discount)
+  const ogTitle = `${nameBn} | ${shopName}`;
 
-  // Open Graph Description: product description + current price
-  const rawDesc = product.shortDescBn || product.shortDesc || product.fullDescBn || '';
-  const cleanDesc = rawDesc.replace(/\s+/g, ' ').trim().slice(0, 180);
-  const ogDescription = `${cleanDesc ? cleanDesc + ' | ' : ''}অফার মূল্য: ${priceFormatted}${originalPrice > 0 ? ` (পূর্বমূল্য: ${originalPriceFormatted})` : ''}। ক্যাশ অন ডেলিভারি ও দ্রুত হোম ডেলিভারি | ${shopName}`;
+  // Open Graph Description: product description without prices or currency symbols
+  let cleanDesc = (product.shortDescBn || product.shortDesc || product.fullDescBn || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  // Strip out any price or currency expressions if present
+  cleanDesc = cleanDesc.replace(/(৳|tk|taka|টাকা|মূল্য|অফার|দাম|price)[\s:]*[\d,]+/gi, '').replace(/\s+/g, ' ').trim();
+  if (cleanDesc.length > 160) {
+    cleanDesc = cleanDesc.slice(0, 160) + '...';
+  }
+  const ogDescription = cleanDesc
+    ? `${cleanDesc} | ক্যাশ অন ডেলিভারি ও দ্রুত হোম ডেলিভারি | ${shopName}`
+    : `অরিজিনাল ও প্রিমিয়াম কোয়ালিটি পণ্য। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি ও দ্রুত হোম ডেলিভারি সুবিধা | ${shopName}`;
 
   // Exact product image from database / product data (identical to shop card)
   const exactProductImage = getExactProductImageUrl(product);
@@ -107,10 +115,6 @@ function buildProductHtml(product: any, storeSettings?: any): string {
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="${escapeHtml(nameBn)}">
-
-  <!-- Product Metadata -->
-  <meta property="product:price:amount" content="${offerPrice}">
-  <meta property="product:price:currency" content="BDT">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -422,7 +426,6 @@ function buildProductHtml(product: any, storeSettings?: any): string {
     <div class="product-card">
       <div class="img-container">
         <img src="${escapeHtml(exactProductImage)}" alt="${escapeHtml(nameBn)}" class="product-img" loading="eager">
-        ${product.discountPercent > 0 ? `<div class="badge-discount">-${product.discountPercent}% ছাড়</div>` : ''}
         <div class="badge-cod">✓ ক্যাশ অন ডেলিভারি (পণ্য দেখে পেমেন্ট)</div>
       </div>
 

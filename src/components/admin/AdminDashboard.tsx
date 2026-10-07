@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { Product, Category, Banner, StoreSettings } from '../../types';
+import { Product, Category, StoreSettings } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { AdminProductsTab } from './AdminProductsTab';
 import { AdminCategoriesTab } from './AdminCategoriesTab';
-import { AdminBannersTab } from './AdminBannersTab';
 import { AdminSettingsTab } from './AdminSettingsTab';
-import { Package, Layers, Image as ImageIcon, Settings, LogOut, ExternalLink, ShieldCheck, ShoppingBag } from 'lucide-react';
+import { Package, Layers, Settings, LogOut, ExternalLink, ShieldCheck, ShoppingBag } from 'lucide-react';
 
 interface AdminDashboardProps {
   products: Product[];
   categories: Category[];
-  banners: Banner[];
+  banners?: any[];
   settings: StoreSettings;
   onExitAdmin: () => void;
   onProductDeleted?: (productId: string) => void;
@@ -18,17 +17,15 @@ interface AdminDashboardProps {
   onBannerDeleted?: (bannerId: string) => void;
 }
 
-type TabType = 'products' | 'categories' | 'banners' | 'settings';
+type TabType = 'products' | 'categories' | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   products,
   categories,
-  banners,
   settings,
   onExitAdmin,
   onProductDeleted,
   onCategoryDeleted,
-  onBannerDeleted,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('products');
   const { currentUser, logout } = useAuth();
@@ -117,18 +114,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
 
             <button
-              onClick={() => setActiveTab('banners')}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === 'banners'
-                  ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <ImageIcon className="w-4 h-4" />
-              <span className="bengali-font">ব্যানার (Banners - {banners.length})</span>
-            </button>
-
-            <button
               onClick={() => setActiveTab('settings')}
               className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 activeTab === 'settings'
@@ -157,13 +142,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             categories={categories}
             products={products}
             onCategoryDeleted={onCategoryDeleted}
-          />
-        )}
-        {activeTab === 'banners' && (
-          <AdminBannersTab
-            banners={banners}
-            categories={categories}
-            onBannerDeleted={onBannerDeleted}
           />
         )}
         {activeTab === 'settings' && (
